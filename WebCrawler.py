@@ -26,113 +26,113 @@ totalDepth = 0;
 
 requestsSession = requests_session()
 
-def crawlWebsite(url, crawlDepth): 
+def crawl_website(url, crawl_depth): 
     # The given URL should be the root
     linksDepthMap[0] = [url]
     
     # Compute the root output folder for each application run
     global outputWebFolder
-    outputWebFolder = Utils.computeAlphaNumericalString(url)
+    outputWebFolder = Utils.compute_alpha_numerical_string(url)
 
     global totalDepth
-    totalDepth = crawlDepth
+    totalDepth = crawl_depth
 
     # Each link from each level is parsed and saved on a different thread
     # The application waits for each level to be completely finished before moving to the next one
-    for currentDepthLevel in range(crawlDepth):
+    for current_depth_level in range(crawl_depth):
         # Get all the links at the current depth
-        links = linksDepthMap[currentDepthLevel]
+        links = linksDepthMap[current_depth_level]
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            executor.map(crawlPage, links, repeat(currentDepthLevel, len(links)))
+            executor.map(crawl_page, links, repeat(current_depth_level, len(links)))
 	
 	# Close requests connection
     requestsSession.close()
     
     
-def crawlPage(url, depthLevel):
+def crawl_page(url, depth_level):
     if not IsUrlValid(url):
         print('Invalid Link')
         return
         
     # Get page html source code
-    pageSource = requestsSession.get(url)
+    page_source = requestsSession.get(url)
     # Create beautifulsoup object fom html sorce code
-    soup = BeautifulSoup(pageSource.text, 'html.parser')
+    soup = BeautifulSoup(page_source.text, 'html.parser')
     
     #Extract links to map for the next level (skip if currently at last level)
-    if depthLevel + 1 < totalDepth:
-        addLinksFromPageToMap(soup, depthLevel)
+    if depth_level + 1 < totalDepth:
+        add_links_from_page_to_map(soup, depth_level)
 
     # Alter <A Href> links with the values that will be saved on the disk in the next depth level
-    alterAHtmlLinks(soup)
+    alter_a_html_links(soup)
 
     # Save the page html on disk
-    savePageOnDisk(soup, pageSource.url)
+    save_page_on_disk(soup, page_source.url)
     
 
-def linkExistsInMap(link):
+def link_exists_in_map(link):
     # Check all levels (e.g. home page can be found on all sub pages)
-    for linkList in linksDepthMap.values():
-        if link in linkList:
+    for link_list in linksDepthMap.values():
+        if link in link_list:
             return True
 
     return False
 
             
-def savePageOnDisk(soup, url):
+def save_page_on_disk(soup, url):
     # Get alpha numerical page title
-    alphaNumUrl = Utils.computeAlphaNumericalString(url)
+    alpha_num_url = Utils.compute_alpha_numerical_string(url)
 
     # Create file
-    outputFolder = Constants.kOutputFolder + Constants.kDirSeparator + outputWebFolder + Constants.kDirSeparator + alphaNumUrl
-    htmlFileName = outputFolder + Constants.kDirSeparator + alphaNumUrl + Constants.kHtmlFileEnding
-    os.makedirs(os.path.dirname(htmlFileName), exist_ok=True)
+    output_folder = Constants.koutput_folder + Constants.kDirSeparator + outputWebFolder + Constants.kDirSeparator + alpha_num_url
+    html_file_name = output_folder + Constants.kDirSeparator + alpha_num_url + Constants.kHtmlFileEnding
+    os.makedirs(os.path.dirname(html_file_name), exist_ok=True)
     
     # Save 
-    srcFolder = outputFolder + Constants.kDirSeparator + alphaNumUrl + Constants.k_files
-    if not os.path.exists(srcFolder):
-        os.mkdir(srcFolder)
+    src_folder = output_folder + Constants.kDirSeparator + alpha_num_url + Constants.k_files
+    if not os.path.exists(src_folder):
+        os.mkdir(src_folder)
        
     # Download content from page and modify the link value to the saved file link
-    downloadAndAlterPageContent(srcFolder, soup, Constants.kHtmlTagImg, Constants.kHtmlInnerSrc)
-    downloadAndAlterPageContent(srcFolder, soup, Constants.kHtmlTagImg, Constants.kHtmlInnerDataSrc)
-    downloadAndAlterPageContent(srcFolder, soup, Constants.kHtmlTagLink, Constants.kHtmlInnerHref)
-    downloadAndAlterPageContent(srcFolder, soup, Constants.kHtmlTagScript, Constants.kHtmlInnerSrc)
+    download_and_alter_page_content(src_folder, soup, Constants.kHtmlTagImg, Constants.kHtmlInnerSrc)
+    download_and_alter_page_content(src_folder, soup, Constants.kHtmlTagImg, Constants.kHtmlInnerDataSrc)
+    download_and_alter_page_content(src_folder, soup, Constants.kHtmlTagLink, Constants.kHtmlInnerHref)
+    download_and_alter_page_content(src_folder, soup, Constants.kHtmlTagScript, Constants.kHtmlInnerSrc)
     
     # Save html source code in the file
-    with open(htmlFileName, "w", encoding="utf-8") as file:
+    with open(html_file_name, "w", encoding="utf-8") as file:
         file.write(soup.prettify())
         file.close()
        
        
-def addLinksFromPageToMap(soup, depthLevel):
+def add_links_from_page_to_map(soup, depth_level):
     # Add non-duplicate links to the links depth map on the next level
     for link in soup.find_all('a', href=True):
-        if not linkExistsInMap(link[Constants.kHtmlInnerHref]):
-            linksDepthMap.setdefault(depthLevel + 1,[]).append(link[Constants.kHtmlInnerHref])
+        if not link_exists_in_map(link[Constants.kHtmlInnerHref]):
+            linksDepthMap.setdefault(depth_level + 1,[]).append(link[Constants.kHtmlInnerHref])
 
-def alterAHtmlLinks(soup):
+def alter_a_html_links(soup):
     # Get all <a href> links from the current page and modify their value to the new structure
     for link in soup.find_all('a', href=True):
-        alphaNumTitle = Utils.computeAlphaNumericalString(link[Constants.kHtmlInnerHref])
-        newVal = '..' + Constants.kDirSeparator + alphaNumTitle + Constants.kDirSeparator + alphaNumTitle + Constants.kHtmlFileEnding
-        link[Constants.kHtmlInnerHref] = newVal
+        alpha_num_title = Utils.compute_alpha_numerical_string(link[Constants.kHtmlInnerHref])
+        new_val = '..' + Constants.kDirSeparator + alpha_num_title + Constants.kDirSeparator + alpha_num_title + Constants.kHtmlFileEnding
+        link[Constants.kHtmlInnerHref] = new_val
 
 
-def downloadAndAlterPageContent(pagefolder, soup, tag, inner):
+def download_and_alter_page_content(pagefolder, soup, tag, inner):
     for res in soup.findAll(tag):   # images, css, etc..
         try:
-            fileName = os.path.basename(res[inner])
+            file_name = os.path.basename(res[inner])
             # Res[inner] # may or may not exist 
-            filePath = os.path.join(pagefolder, fileName)
-            newResVal = os.path.basename(pagefolder) + Constants.kDirSeparator + fileName
+            file_path = os.path.join(pagefolder, file_name)
+            new_res_val = os.path.basename(pagefolder) + Constants.kDirSeparator + file_name
             # Copy inner value before altering it
-            fileToSave = res[inner]
+            file_to_save = res[inner]
             # Alter tag inner value to the locally saved content
-            res[inner] = newResVal
-            if not os.path.isfile(filePath): # Has not been downloaded
-                with open(filePath, 'wb') as file:
-                    fileBin = requestsSession.get(fileToSave)
-                    file.write(fileBin.content)
+            res[inner] = new_res_val
+            if not os.path.isfile(file_path): # Has not been downloaded
+                with open(file_path, 'wb') as file:
+                    file_bin = requestsSession.get(file_to_save)
+                    file.write(file_bin.content)
         except Exception as exc:      
             print(exc, file=sys.stderr)

@@ -18,6 +18,6 @@ if __name__ == '__main__':
         sys.exit()
 
     import WebCrawler
-    WebCrawler.crawlWebsite(args[0],int(args[1]))
+    WebCrawler.crawl_website(args[0],int(args[1]))
     
     
