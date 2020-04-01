@@ -13,7 +13,7 @@ Depending on which installation method you chose you can run the application usi
 e.g main.exe https://legioxiii.ro 2
 
 Arguments :
-- link : this should be a valid link in htttp format (as pasted from the browser) that can be used to access the page
+- link : this should be a valid link in http format (as pasted from the browser) that can be used to access the page
 - depth : levels of sub pages to be downloaded starting from the root ( given page)
 
 The first argument represents the page that will be crawler and the second one the depth (sub pages) to be crawler as well
